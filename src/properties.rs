@@ -11,7 +11,6 @@ pub struct Parameter {
 }
 
 impl Parameter {
-
     /// Creates a new `Parameter`
     pub fn new(key: &str, val: &str) -> Self {
         Parameter {
@@ -22,7 +21,7 @@ impl Parameter {
 }
 
 //type EntryParameters = Vec<Parameter>;
-type EntryParameters = HashMap<String,Parameter>;
+pub type EntryParameters = HashMap<String,Parameter>;
 
 #[derive(Debug)]
 /// key-value pairs inside of `Component`s

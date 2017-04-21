@@ -7,6 +7,7 @@ use std::mem;
 use std::collections::HashMap;
 
 use properties::*;
+//use parse;
 
 /// VEVENT [(RFC 5545, Section 3.6.1 )](https://tools.ietf.org/html/rfc5545#section-3.6.1)
 #[derive(Debug, Default)]
@@ -21,6 +22,13 @@ struct InnerComponent{
     properties: HashMap<String,Property>,
     multi_properties: Vec<Property>
 }
+
+//impl<'a> Into<InnerComponent> for parse::Component<'a> {
+//    fn into(self) -> InnerComponent {
+//        unimplemented!()
+//    }
+//}
+
 
 impl InnerComponent {
     /// End of builder pattern.

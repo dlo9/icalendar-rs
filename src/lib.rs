@@ -38,7 +38,7 @@
 //! )
 //!     .done();
 //!
-//! let todo = Todo::new().summary("Buy some milk").done();
+//! //let todo = Todo::new().summary("Buy some milk").done();
 //!
 //!
 //! let mut calendar = Calendar::new();
@@ -59,7 +59,8 @@
 
 extern crate chrono;
 extern crate uuid;
-//extern crate vobject;
+#[macro_use]
+extern crate nom;
 
 macro_rules! print_crlf {
     () => (print!("\r\n"));
@@ -83,6 +84,7 @@ macro_rules! write_crlf {
 mod components;
 mod properties;
 mod calendar;
+pub mod parse;
 
 //pub mod repeats;
 pub use properties::{Property, Parameter, Class, ValueType};
