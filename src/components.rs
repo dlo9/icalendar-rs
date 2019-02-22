@@ -66,10 +66,20 @@ pub struct Todo {
     inner: InnerComponent,
 }
 
+/// VALARM [(RFC 5545, Section 3.6.6 )](https://tools.ietf.org/html/rfc5545#section-3.6.6)
 #[derive(Debug, Default)]
-struct InnerComponent {
+pub struct Alarm { inner: InnerComponent }
+
+#[derive(Debug, Default)]
+struct InnerComponent{
     properties: BTreeMap<String, Property>,
     multi_properties: Vec<Property>,
+    components: Vec<ComponentType>,
+}
+
+#[derive(Debug)]
+pub enum ComponentType {
+    Alarm(Alarm),
 }
 
 impl InnerComponent {
@@ -79,7 +89,21 @@ impl InnerComponent {
         InnerComponent {
             properties: mem::replace(&mut self.properties, BTreeMap::new()),
             multi_properties: mem::replace(&mut self.multi_properties, Vec::new()),
+            components: mem::replace(&mut self.components, Vec::new()),
         }
+    }
+}
+
+impl Alarm {
+    /// Creates a new Event.
+    pub fn new() -> Self {
+        Default::default()
+    }
+
+    /// End of builder pattern.
+    /// copies over everything
+    pub fn done(&mut self) -> Self {
+        Alarm { inner: self.inner.done() }
     }
 }
 
@@ -172,7 +196,10 @@ pub trait Component {
     fn properties(&self) -> &BTreeMap<String, Property>;
 
     /// Read-only access to `multi_properties`
-    fn multi_properties(&self) -> &Vec<Property>;
+    fn multi_properties(&self) -> &Vec<Property> ;
+
+    /// Read-only access to `components`
+    fn components(&self) -> &Vec<ComponentType> ;
 
     /// Writes `Component` into a `Writer` using `std::fmt`.
     fn fmt_write<W: fmt::Write>(&self, out: &mut W) -> Result<(), fmt::Error> {
@@ -195,6 +222,12 @@ pub trait Component {
             property.fmt_write(out)?;
         }
 
+        for component in self.components() {
+            match component {
+                ComponentType::Alarm(alarm) => alarm.fmt_write(out)?,
+            }
+        }
+
         write_crlf!(out, "END:{}", Self::component_kind())?;
         Ok(())
     }
@@ -211,6 +244,9 @@ pub trait Component {
 
     /// Adds a `Property` of which there may be many
     fn append_multi_property(&mut self, property: Property) -> &mut Self;
+
+    /// Append a given `Property`
+    fn append_component(&mut self, component: ComponentType) -> &mut Self;
 
     /// Construct and append a `Property`
     fn add_property(&mut self, key: &str, val: &str) -> &mut Self {
@@ -361,6 +397,11 @@ macro_rules! component_impl {
                 &self.inner.multi_properties
             }
 
+            /// Read-only access to `components`
+            fn components(&self) -> &Vec<ComponentType> {
+                &self.inner.components
+            }
+
             /// Adds a `Property`
             fn append_property(&mut self, property: Property) -> &mut Self {
                 self.inner.properties.insert(property.key(), property);
@@ -372,9 +413,17 @@ macro_rules! component_impl {
                 self.inner.multi_properties.push(property);
                 self
             }
+
+            /// Adds a `Property` of which there may be many
+            fn append_component(&mut self, component: ComponentType) -> &mut Self {
+                self.inner.components.push(component);
+                self
+            }
+
         }
     };
 }
 
 component_impl! { Event, "VEVENT" }
 component_impl! { Todo , "VTODO"}
+component_impl! { Alarm , "VALARM"}
